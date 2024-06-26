@@ -9,7 +9,7 @@ from featureflags.evaluations.auth_target import Target
 
 
 logger = logging.getLogger(__name__)
-class HarnessClient:
+class HarnessClient(AbstractProvider):
     def __init__(self, api_key):
         self.cf_client = CfClient(api_key)
         self.cf_client.wait_for_initialization()
