@@ -1,21 +1,21 @@
 import logging
+from openfeature import api
 from .providers import HarnessClient
 
 logger = logging.getLogger(__name__)
 
 class FeatureFlagService:
     def __init__(self):
-        self.harness_client = HarnessClient(api_key='a3fa9722-ff5e-4096-a122-ab9a2a13d355')
+        self.provider = HarnessClient(api_key='a3fa9722-ff5e-4096-a122-ab9a2a13d355')
+        api.set_provider(self.provider)
 
-    def fetch_flag_values(self, flag_name, target_identifier, target_name):
-        logger.info("fetch_flag_values() -- start")
-
+    def fetch_flag_value(self, flag_name):
+        logger.info("fetch_flag_value() -- start")
         try:
-            flag_value = self.harness_client.is_feature_enabled(flag_name, target_identifier, target_name, False)
-            logger.info(f"Flag '{flag_name}' resolved with value: {flag_value}")
+            client = api.get_client()
+            flag_value = client.get_boolean_value(flag_name, False)
         except Exception as e:
             logger.error(f"Error fetching flag value: {e}")
             flag_value = False
-
-        logger.info("fetch_flag_values() -- end")
+        logger.info("fetch_flag_value() -- end")
         return flag_value

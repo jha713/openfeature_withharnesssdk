@@ -10,15 +10,10 @@ class FeatureFlagController(View):
 
     def get(self, request):
         flag_name = request.GET.get('flag_name')
-
         if not flag_name:
             return JsonResponse({'error': 'flag_name parameter is required'}, status=400)
-
+        
         logger.info("get() -- start")
-        target_identifier = 'openidentifier'
-        target_name = 'openfeature'
-        flag_value = self.feature_flag_service.fetch_flag_values(flag_name, target_identifier, target_name)
-        logger.info(f"flag_value: {flag_value}")
+        flag_value = self.feature_flag_service.fetch_flag_value(flag_name)
         logger.info("get() -- end")
-
         return JsonResponse({'flag_value': flag_value}, status=200)
