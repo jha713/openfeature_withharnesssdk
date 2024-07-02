@@ -101,6 +101,24 @@ class HarnessClient(AbstractProvider):
             logger.error(f"Error resolving flag '{flag_key}': {e}")
             value = default_value
         return FlagResolutionDetails(value=value, reason="DEFAULT", variant="variant", flag_metadata={}, error_code=None)
+    
+    def get_string_variation(
+        self,
+        flag_key: str,
+        target_identifier: str,
+        target_name: str,
+        default_value: str,
+    ) -> str:
+        logger.info(f"get_string_variation() -- flag_key: {flag_key}, target_identifier: {target_identifier}, target_name: {target_name}")
+        try:
+            target = Target(identifier=target_identifier, name=target_name)
+            value = self.cf_client.string_variation(flag_key, target, default_value)
+            logger.info(f"Flag '{flag_key}' resolved with value: {value} for target {target_identifier}")
+            return value
+        except Exception as e:
+            logger.error(f"Error resolving flag '{flag_key}': {e}")
+            return default_value
+
 
     def shutdown(self):
         if self.cf_client:
