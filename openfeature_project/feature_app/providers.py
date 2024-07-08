@@ -1,4 +1,4 @@
-from typing import Optional, Any, List
+from typing import Optional, Any, List , Union, Set
 from openfeature.evaluation_context import EvaluationContext
 from openfeature.flag_evaluation import FlagResolutionDetails
 from openfeature.hook import Hook
@@ -11,10 +11,17 @@ logger = logging.getLogger(__name__)
 
 class HarnessClient(AbstractProvider):
     def __init__(self, api_key):
-        self.cf_client = CfClient(api_key)
-        self.cf_client.wait_for_initialization()
-        self.target = Target(identifier="default_identifier", name="default_name")  # Setting default target
-        logger.info("Harness client initialized successfully")
+        try:
+            logger.info("Initializing HarnessClient with provided API key...")
+            self.cf_client = CfClient(api_key)
+            logger.info("Harness client created, waiting for initialization...")
+            self.cf_client.wait_for_initialization()
+            if not self.cf_client.is_initialized():
+                raise Exception("Harness client failed to initialize")
+            logger.info("Harness client initialized successfully")
+        except Exception as e:
+            logger.error(f"Error initializing Harness client: {e}")
+            self.cf_client = None
 
     def get_metadata(self) -> Metadata:
         return Metadata(name="HarnessProvider")
@@ -30,7 +37,9 @@ class HarnessClient(AbstractProvider):
     ) -> FlagResolutionDetails[bool]:
         logger.info(f"resolve_boolean_details() -- flag_key: {flag_key}")
         try:
-            target = Target(identifier="default_identifier", name="default_name")  # Setting default target
+            if self.cf_client is None:
+                raise Exception("Harness client not initialized")
+            target = Target(identifier="default_identifier", name="default_name")
             value = self.cf_client.bool_variation(flag_key, target, default_value)
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
@@ -46,7 +55,9 @@ class HarnessClient(AbstractProvider):
     ) -> FlagResolutionDetails[str]:
         logger.info(f"resolve_string_details() -- flag_key: {flag_key}")
         try:
-            target = Target(identifier="default_identifier", name="default_name")  # Setting default target
+            if self.cf_client is None:
+                raise Exception("Harness client not initialized")
+            target = Target(identifier="default_identifier", name="default_name")
             value = self.cf_client.string_variation(flag_key, target, default_value)
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
@@ -62,7 +73,9 @@ class HarnessClient(AbstractProvider):
     ) -> FlagResolutionDetails[float]:
         logger.info(f"resolve_float_details() -- flag_key: {flag_key}")
         try:
-            target = Target(identifier="default_identifier", name="default_name")  # Setting default target
+            if self.cf_client is None:
+                raise Exception("Harness client not initialized")
+            target = Target(identifier="default_identifier", name="default_name")
             value = self.cf_client.float_variation(flag_key, target, default_value)
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
@@ -78,8 +91,10 @@ class HarnessClient(AbstractProvider):
     ) -> FlagResolutionDetails[int]:
         logger.info(f"resolve_integer_details() -- flag_key: {flag_key}")
         try:
-            target = Target(identifier="default_identifier", name="default_name")  # Setting default target
-            value = self.cf_client.integer_variation(flag_key, target, default_value)
+            if self.cf_client is None:
+                raise Exception("Harness client not initialized")
+            target = Target(identifier="default_identifier", name="default_name")
+            value = int(self.cf_client.number_variation(flag_key, target, float(default_value)))
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
             logger.error(f"Error resolving flag '{flag_key}': {e}")
@@ -91,33 +106,20 @@ class HarnessClient(AbstractProvider):
         flag_key: str,
         default_value: Any,
         evaluation_context: Optional[EvaluationContext] = None,
-    ) -> FlagResolutionDetails[Any]:
+    ) -> FlagResolutionDetails[Union[dict, list]]:
         logger.info(f"resolve_object_details() -- flag_key: {flag_key}")
         try:
-            target = Target(identifier="default_identifier", name="default_name")  # Setting default target
+            if self.cf_client is None:
+                raise Exception("Harness client not initialized")
+            target = Target(identifier="default_identifier", name="default_name")
             value = self.cf_client.json_variation(flag_key, target, default_value)
+            if not isinstance(value, (dict, list)):
+                raise TypeError(f"Expected type (dict, list) but got {type(value)}")
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
             logger.error(f"Error resolving flag '{flag_key}': {e}")
             value = default_value
         return FlagResolutionDetails(value=value, reason="DEFAULT", variant="variant", flag_metadata={}, error_code=None)
-    
-    def get_string_variation(
-        self,
-        flag_key: str,
-        target_identifier: str,
-        target_name: str,
-        default_value: str,
-    ) -> str:
-        logger.info(f"get_string_variation() -- flag_key: {flag_key}, target_identifier: {target_identifier}, target_name: {target_name}")
-        try:
-            target = Target(identifier=target_identifier, name=target_name)
-            value = self.cf_client.string_variation(flag_key, target, default_value)
-            logger.info(f"Flag '{flag_key}' resolved with value: {value} for target {target_identifier}")
-            return value
-        except Exception as e:
-            logger.error(f"Error resolving flag '{flag_key}': {e}")
-            return default_value
 
 
     def shutdown(self):
