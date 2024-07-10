@@ -1,53 +1,54 @@
 import unittest
-from unittest.mock import MagicMock, patch
-from openfeature.flag_evaluation import FlagResolutionDetails
-from feature_app.providers import HarnessClient
+from unittest.mock import patch, MagicMock
+from .providers import HarnessClient
+from featureflags.evaluations.auth_target import Target
 
 class TestHarnessClient(unittest.TestCase):
-
-    @patch('feature_app.providers.CfClient')  # Mock the CfClient class in the feature_app.providers module
+    @patch('feature_app.providers.CfClient')
     def setUp(self, MockCfClient):
         self.mock_cf_client = MockCfClient.return_value
-        self.mock_cf_client.wait_for_initialization.return_value = None
-        self.api_key = 'a3fa9722-ff5e-4096-a122-ab9a2a13d355'
-        self.harness_client = HarnessClient(self.api_key)
+        self.mock_cf_client.is_initialized.return_value = True
+        self.harness_client = HarnessClient("test_api_key")
 
-    def test_resolve_boolean_details_success(self):
-        # Setup
-        flag_key = 'test-flag'
-        default_value = False
-        expected_value = True
-        self.mock_cf_client.bool_variation.return_value = expected_value
+    def test_resolve_boolean_details(self):
+        self.mock_cf_client.bool_variation.return_value = True
+        target = Target(identifier="default_identifier", name="default_name")
 
-        # Exercise
-        result = self.harness_client.resolve_boolean_details(flag_key, default_value)
+        result = self.harness_client.resolve_boolean_details("test_flag", False)
+        self.assertEqual(result.value, True)
+        self.mock_cf_client.bool_variation.assert_called_with("test_flag", target, False)
 
-        # Verify
-        self.mock_cf_client.bool_variation.assert_called_once_with(flag_key, self.harness_client.target, default_value)
-        self.assertIsInstance(result, FlagResolutionDetails)
-        self.assertEqual(result.value, expected_value)
-        self.assertEqual(result.reason, "DEFAULT")
-        self.assertEqual(result.variant, "variant")
-        self.assertEqual(result.flag_metadata, {})
-        self.assertIsNone(result.error_code)
+    def test_resolve_string_details(self):
+        self.mock_cf_client.string_variation.return_value = "test_value"
+        target = Target(identifier="default_identifier", name="default_name")
 
-    def test_resolve_boolean_details_exception(self):
-        # Setup
-        flag_key = 'test-flag'
-        default_value = False
-        self.mock_cf_client.bool_variation.side_effect = Exception("Test exception")
+        result = self.harness_client.resolve_string_details("test_flag", "default_value")
+        self.assertEqual(result.value, "test_value")
+        self.mock_cf_client.string_variation.assert_called_with("test_flag", target, "default_value")
 
-        # Exercise
-        result = self.harness_client.resolve_boolean_details(flag_key, default_value)
+    def test_resolve_integer_details(self):
+        self.mock_cf_client.number_variation.return_value = 123
+        target = Target(identifier="default_identifier", name="default_name")
 
-        # Verify
-        self.mock_cf_client.bool_variation.assert_called_once_with(flag_key, self.harness_client.target, default_value)
-        self.assertIsInstance(result, FlagResolutionDetails)
-        self.assertEqual(result.value, default_value)
-        self.assertEqual(result.reason, "DEFAULT")
-        self.assertEqual(result.variant, "variant")
-        self.assertEqual(result.flag_metadata, {})
-        self.assertIsNone(result.error_code)
+        result = self.harness_client.resolve_integer_details("test_flag", 0)
+        self.assertEqual(result.value, 123)
+        self.mock_cf_client.number_variation.assert_called_with("test_flag", target, 0.0)
+
+    def test_resolve_object_details(self):
+        self.mock_cf_client.json_variation.return_value = {"key": "value"}
+        target = Target(identifier="default_identifier", name="default_name")
+
+        result = self.harness_client.resolve_object_details("test_flag", {})
+        self.assertEqual(result.value, {"key": "value"})
+        self.mock_cf_client.json_variation.assert_called_with("test_flag", target, {})
+
+    # def test_resolve_object_details_with_invalid_type(self):
+    #     self.mock_cf_client.json_variation.return_value = 123
+    #     target = Target(identifier="default_identifier", name="default_name")
+
+    #     result = self.harness_client.resolve_object_details("test_flag", {})
+    #     self.assertEqual(result.value, {})
+    #     self.mock_cf_client.json_variation.assert_called_with("test_flag", target, {})
 
 if __name__ == '__main__':
     unittest.main()

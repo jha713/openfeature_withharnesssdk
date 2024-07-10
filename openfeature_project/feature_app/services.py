@@ -1,6 +1,7 @@
 import logging
 from openfeature import api
 from .providers import HarnessClient
+# from openfeature.provider.harness_provider import HarnessClient
 from featureflags.evaluations.auth_target import Target
 from openfeature.evaluation_context import EvaluationContext
 
