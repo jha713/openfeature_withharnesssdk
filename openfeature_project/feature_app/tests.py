@@ -41,14 +41,5 @@ class TestHarnessClient(unittest.TestCase):
         result = self.harness_client.resolve_object_details("test_flag", {})
         self.assertEqual(result.value, {"key": "value"})
         self.mock_cf_client.json_variation.assert_called_with("test_flag", target, {})
-
-    # def test_resolve_object_details_with_invalid_type(self):
-    #     self.mock_cf_client.json_variation.return_value = 123
-    #     target = Target(identifier="default_identifier", name="default_name")
-
-    #     result = self.harness_client.resolve_object_details("test_flag", {})
-    #     self.assertEqual(result.value, {})
-    #     self.mock_cf_client.json_variation.assert_called_with("test_flag", target, {})
-
 if __name__ == '__main__':
     unittest.main()

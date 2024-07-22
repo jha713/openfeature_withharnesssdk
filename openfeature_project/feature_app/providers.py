@@ -7,6 +7,8 @@ import logging
 from featureflags.client import CfClient
 from featureflags.evaluations.auth_target import Target
 
+# Initialize logging
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class HarnessClient(AbstractProvider):
@@ -39,7 +41,15 @@ class HarnessClient(AbstractProvider):
         try:
             if self.cf_client is None:
                 raise Exception("Harness client not initialized")
-            target = Target(identifier="default_identifier", name="default_name")
+            
+            if evaluation_context:
+                target_identifier = evaluation_context.attributes.get("identifier", "default_identifier")
+                target_name = evaluation_context.attributes.get("name", "default_name")
+            else:
+                target_identifier = "default_identifier"
+                target_name = "default_name"
+            target = Target(identifier=target_identifier, name=target_name)
+            logger.info(f'target created : {target}')
             value = self.cf_client.bool_variation(flag_key, target, default_value)
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
@@ -57,14 +67,24 @@ class HarnessClient(AbstractProvider):
         try:
             if self.cf_client is None:
                 raise Exception("Harness client not initialized")
-            target = Target(identifier="default_identifier", name="default_name")
+            
+            if evaluation_context:
+                target_identifier = evaluation_context.attributes.get("identifier", "default_identifier")
+                target_name = evaluation_context.attributes.get("name", "default_name")
+            else:
+                target_identifier = "default_identifier"
+                target_name = "default_name"
+            
+            target = Target(identifier=target_identifier, name=target_name)
+            logger.info(f"Target created: {target}")
+            
             value = self.cf_client.string_variation(flag_key, target, default_value)
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
             logger.error(f"Error resolving flag '{flag_key}': {e}")
             value = default_value
         return FlagResolutionDetails(value=value, reason="DEFAULT", variant="variant", flag_metadata={}, error_code=None)
-
+    
     def resolve_float_details(
         self,
         flag_key: str,
@@ -75,7 +95,15 @@ class HarnessClient(AbstractProvider):
         try:
             if self.cf_client is None:
                 raise Exception("Harness client not initialized")
-            target = Target(identifier="default_identifier", name="default_name")
+            
+            if evaluation_context:
+                target_identifier = evaluation_context.attributes.get("identifier", "default_identifier")
+                target_name = evaluation_context.attributes.get("name", "default_name")
+
+            else:
+                target_identifier = "default_identifier"
+                target_name = "default_name"
+            target = Target(identifier=target_identifier, name=target_name)
             value = self.cf_client.float_variation(flag_key, target, default_value)
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
@@ -93,7 +121,17 @@ class HarnessClient(AbstractProvider):
         try:
             if self.cf_client is None:
                 raise Exception("Harness client not initialized")
-            target = Target(identifier="default_identifier", name="default_name")
+            
+            if evaluation_context:
+                target_identifier = evaluation_context.attributes.get("identifier", "default_identifier")
+                target_name = evaluation_context.attributes.get("name", "default_name")
+            
+            else:
+                target_identifier = "default_identifier"
+                target_name = "default_name"
+
+            target = Target(identifier=target_identifier, name=target_name)
+            logger.info(f"Target created: {target}")
             value = int(self.cf_client.number_variation(flag_key, target, float(default_value)))
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
@@ -111,7 +149,15 @@ class HarnessClient(AbstractProvider):
         try:
             if self.cf_client is None:
                 raise Exception("Harness client not initialized")
-            target = Target(identifier="default_identifier", name="default_name")
+            
+            if evaluation_context:
+                target_identifier = evaluation_context.attributes.get("identifier", "default_identifier")
+                target_name = evaluation_context.attributes.get("name", "default_name")
+            
+            else:
+                target_identifier = "default_identifier"
+                target_name = "default_name"
+            target = Target(identifier=target_identifier, name=target_name)
             value = self.cf_client.json_variation(flag_key, target, default_value)
             if not isinstance(value, (dict, list)):
                 raise TypeError(f"Expected type (dict, list) but got {type(value)}")
