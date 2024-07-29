@@ -1,18 +1,14 @@
-import os
-from dotenv import load_dotenv
 import logging
 from openfeature import api
 from .providers import HarnessClient
-from featureflags.evaluations.auth_target import Target
 from openfeature.evaluation_context import EvaluationContext
 
 logger = logging.getLogger(__name__)
 
-load_dotenv()
 
 class FeatureFlagService:
-    def __init__(self):
-        self.provider = HarnessClient(api_key=os.getenv('HARNESS_API_KEY'))
+    def __init__(self ,api_key):
+        self.provider = HarnessClient(api_key)
         api.set_provider(self.provider)
         self.client = api.get_client()
 
@@ -44,6 +40,20 @@ class FeatureFlagService:
         except Exception as e:
             logger.error(f"Error fetching string variation: {e}")
             return 'default'
+        
+    def fetch_float_variation(self, flag_key, user_email):
+        logger.info(f"fetch_float_variation() -- flag_name: {flag_key}")
+        try:
+            evaluation_context = EvaluationContext(
+                targeting_key=user_email,
+                attributes={"identifier": user_email, "name": user_email}
+            )
+            flag_value = self.provider.resolve_float_details(flag_key, 0.0, evaluation_context).value
+            logger.info(f"Fetched float value for '{flag_key}': {flag_value}")
+        except Exception as e:
+            logger.error(f"Error fetching flag value: {e}")
+            flag_value = 0.0
+        return flag_value
 
     def fetch_integer_variation(self, flag_key, user_email):
         logger.info(f"fetch_integer_variation() -- flag_name: {flag_key}")

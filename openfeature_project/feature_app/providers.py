@@ -104,11 +104,11 @@ class HarnessClient(AbstractProvider):
                 target_identifier = "default_identifier"
                 target_name = "default_name"
             target = Target(identifier=target_identifier, name=target_name)
-            value = self.cf_client.float_variation(flag_key, target, default_value)
+            value = self.cf_client.float_variation(flag_key, target, 0.0)
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
             logger.error(f"Error resolving flag '{flag_key}': {e}")
-            value = default_value
+            value = 0.0
         return FlagResolutionDetails(value=value, reason="DEFAULT", variant="variant", flag_metadata={}, error_code=None)
 
     def resolve_integer_details(
@@ -132,11 +132,11 @@ class HarnessClient(AbstractProvider):
 
             target = Target(identifier=target_identifier, name=target_name)
             logger.info(f"Target created: {target}")
-            value = int(self.cf_client.number_variation(flag_key, target, float(default_value)))
+            value = int(self.cf_client.number_variation(flag_key, target, 0))
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
             logger.error(f"Error resolving flag '{flag_key}': {e}")
-            value = default_value
+            value = 0
         return FlagResolutionDetails(value=value, reason="DEFAULT", variant="variant", flag_metadata={}, error_code=None)
 
     def resolve_object_details(
@@ -164,7 +164,7 @@ class HarnessClient(AbstractProvider):
             logger.info(f"Flag '{flag_key}' resolved with value: {value}")
         except Exception as e:
             logger.error(f"Error resolving flag '{flag_key}': {e}")
-            value = default_value
+            value = {}
         return FlagResolutionDetails(value=value, reason="DEFAULT", variant="variant", flag_metadata={}, error_code=None)
 
 
